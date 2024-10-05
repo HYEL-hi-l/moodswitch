@@ -11,8 +11,14 @@ import SpriteKit
 class MSObstacle: SKNode {
     
     var moods: [MSMoodType] = []
+    var layoutInfo: MSLayoutInfo
     
-    required override init() {
+    private var initialRotationDuration: TimeInterval = 0
+    private var currentRotationDuration: TimeInterval = 0
+    private let rotationActionKey = "rotation"
+    
+    required init(layoutInfo: MSLayoutInfo) {
+        self.layoutInfo = layoutInfo
         super.init()
     }
 
@@ -23,12 +29,37 @@ class MSObstacle: SKNode {
         createShape()
     }
 
-    func createShape() {
-        // Override in subclasses
-    }
+    func createShape() {  }
 
     func rotate(duration: TimeInterval) {
+        removeAction(forKey: rotationActionKey)
+        
+        initialRotationDuration = duration
+        currentRotationDuration = duration
+        
         let rotateAction = SKAction.rotate(byAngle: CGFloat.pi * 2, duration: duration)
-        run(SKAction.repeatForever(rotateAction))
+        let repeatForever = SKAction.repeatForever(rotateAction)
+        run(repeatForever, withKey: rotationActionKey)
+    }
+    
+
+    func speedUpRotation(by speedUpFactor: Double) {
+        currentRotationDuration *= speedUpFactor
+        updateRotation()
+    }
+    
+    func slowDownRotation(by slowDownFactor: Double) {
+        currentRotationDuration *= slowDownFactor
+        updateRotation()
+    }
+    
+    func resetRotationSpeed() {
+        currentRotationDuration = initialRotationDuration
+        updateRotation()
+    }
+    
+
+    private func updateRotation() {
+        rotate(duration: currentRotationDuration)
     }
 }

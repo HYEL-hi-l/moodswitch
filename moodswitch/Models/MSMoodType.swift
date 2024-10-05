@@ -9,18 +9,18 @@ import SpriteKit
 
 enum MSMoodType: CaseIterable {
     case happy
-    case angry
     case sad
+    case angry
     case inlove
     
     var textureName: String {
         switch self {
         case .happy:
             return "happy"
-        case .angry:
-            return "angry"
         case .sad:
             return "sad"
+        case .angry:
+            return "angry"
         case .inlove:
             return "inlove"
         }
@@ -34,10 +34,10 @@ enum MSMoodType: CaseIterable {
         switch self {
         case .happy:
             return "FFCF69"
-        case .angry:
-            return "F3504C"
         case .sad:
             return "65BAEE"
+        case .angry:
+            return "F3504C"
         case .inlove:
             return "FF5AA9"
         }

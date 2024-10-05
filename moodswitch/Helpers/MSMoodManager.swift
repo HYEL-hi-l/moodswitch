@@ -13,6 +13,10 @@ class MSMoodManager {
     
     private var activeMoods: [MSMoodType] = [.happy, .sad, .angry, .inlove]
     
+    func getActiveMoodSequence() -> [MSMoodType] {
+         return activeMoods
+     }
+    
     func getRandomMoodSequence() -> [MSMoodType] {
          return activeMoods.map { $0 }.shuffled()
      }
@@ -24,9 +28,7 @@ class MSMoodManager {
     func isMoodMatch(ball: MSBall, obstacle: SKNode?) -> Bool {
         guard let obstacle = obstacle as? SKShapeNode else { return false }
         guard let ballMood = ball.mood else { return false }
-        
-//        print("isColorMatch: Ball Mood - \(ballMood.colorHex), Obstacle Color - \(obstacle.fillColor.hexString)")
-        
+                
         return ballMood.colorHex == obstacle.fillColor.hexString
     }
 }
@@ -80,6 +82,12 @@ extension SKColor {
         } else {
             return String(format: "%02X%02X%02X", Int(r * 255), Int(g * 255), Int(b * 255))
         }
+    }
+    
+    func darker() -> SKColor {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        getRed(&r, green: &g, blue: &b, alpha: &a)
+        return SKColor(red: max(r - 0.25, 0), green: max(g - 0.25, 0), blue: max(b - 0.25, 0), alpha: a)
     }
     
 }

@@ -27,9 +27,8 @@ class MSGameOverState: MSGameState {
     override func willExit(to nextState: GKState) {
         gameOverLabel.removeFromParent()
         retryLabel.removeFromParent()
-        gameScene.ball.position = CGPoint(x: gameScene.frame.midX, y: gameScene.frame.minY)
-        gameScene.ball.physicsBody?.velocity = CGVector(dx: 0, dy: 0)
-        gameScene.ball.physicsBody?.affectedByGravity = false
+        
+        gameScene.reset()
     }
         
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {

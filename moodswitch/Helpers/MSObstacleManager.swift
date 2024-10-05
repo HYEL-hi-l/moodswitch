@@ -11,9 +11,9 @@ import SpriteKit
 class MSObstacleManager {
     var obstacles: [MSObstacle] = []
     var moodSwitches: [MSMoodSwitcher] = []
+    var lastObstacleType: MSObstacle.Type = MSObstacleCircle.self
+    var lastObstacleMoods: [MSMoodType] = MSMoodManager.shared.getActiveMoodSequence()
     var lastObstacleYPosition: CGFloat = 0
-    let obstacleSpacing: CGFloat = 475
-    
 
     func reset() {
         obstacles.forEach { $0.removeFromParent() }
@@ -24,8 +24,8 @@ class MSObstacleManager {
         lastObstacleYPosition = 0
     }
 
-    func updateObstacles(in scene: SKScene, ballPositionY: CGFloat) {
-        if ballPositionY > lastObstacleYPosition - obstacleSpacing * 2 {
+    func updateObstacles(in scene: MSGameScene, ballPositionY: CGFloat) {
+        if ballPositionY > lastObstacleYPosition - scene.layoutInfo.obstacleSpacing * 2 {
             generateObstacle(in: scene)
         }
 
@@ -39,33 +39,41 @@ class MSObstacleManager {
         }
     }
     
-    private func generateObstacle(in scene: SKScene) {
-
+    private func generateObstacle(in scene: MSGameScene) {
+        let obstacleTypes: [MSObstacle.Type]
         let obstacleType: MSObstacle.Type
         let obstacle: MSObstacle
-        
+        let yPosition: CGFloat
+
+        if lastObstacleType == MSObstacleTriangle.self {
+            obstacleTypes = [MSObstacleCircle.self, MSObstacleSquare.self]
+        } else {
+            obstacleTypes = [MSObstacleCircle.self, MSObstacleSquare.self, MSObstacleTriangle.self]
+        }
+
         if obstacles.count < 1 {
             obstacleType = MSObstacleCircle.self
+            yPosition = scene.layoutInfo.firstObstacleYPosition
         } else {
-            let obstacleTypes: [MSObstacle.Type] = [MSObstacleCircle.self, MSObstacleSquare.self, MSObstacleTriangle.self]
             obstacleType = obstacleTypes.randomElement() ?? MSObstacleCircle.self
+            yPosition = lastObstacleYPosition + scene.layoutInfo.obstacleSpacing
         }
         
-        obstacle = obstacleType.init()
-        
-        let newYPosition = lastObstacleYPosition + obstacleSpacing
-        obstacle.setup(at: CGPoint(x: scene.frame.midX, y: newYPosition))
+        obstacle = obstacleType.init(layoutInfo: scene.layoutInfo)
+        obstacle.setup(at: CGPoint(x: scene.frame.midX, y: yPosition))
         scene.addChild(obstacle)
         obstacles.append(obstacle)
         
         if obstacles.count > 1 {
-            let moodSwitch = MSMoodSwitcher(size: CGSize(width: 40.0, height: 40.0), moods: obstacle.moods)
-            moodSwitch.position = CGPoint(x: scene.frame.midX, y: lastObstacleYPosition + (obstacleSpacing / 2))
-            scene.addChild(moodSwitch)
-            moodSwitches.append(moodSwitch)
+            let moodSwitcher = MSMoodSwitcher(radius: scene.layoutInfo.moodSwitcherRadius, moods: obstacle.moods, lastObstacleMoods: lastObstacleMoods)
+            moodSwitcher.position = CGPoint(x: scene.frame.midX, y: lastObstacleYPosition)
+            scene.addChild(moodSwitcher)
+            moodSwitches.append(moodSwitcher)
         }
-
-        lastObstacleYPosition = newYPosition
+        
+        lastObstacleYPosition = yPosition
+        lastObstacleType = obstacleType
+        lastObstacleMoods = obstacle.moods
     }
 
 }
