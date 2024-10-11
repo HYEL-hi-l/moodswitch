@@ -12,6 +12,7 @@ enum MSMoodType: CaseIterable {
     case sad
     case angry
     case inlove
+    case moodless
     
     var textureName: String {
         switch self {
@@ -23,11 +24,13 @@ enum MSMoodType: CaseIterable {
             return "angry"
         case .inlove:
             return "inlove"
+        case .moodless:
+            return "moodless"
         }
     }
     
     var bgTextureName: String {
-        return "\(self.textureName)_bg"
+        return "\(self.textureName)_bg_old"
     }
     
     var colorHex: String {
@@ -40,6 +43,8 @@ enum MSMoodType: CaseIterable {
             return "F3504C"
         case .inlove:
             return "FF5AA9"
+        case .moodless:
+            return "B3B3B3"
         }
     }
     
@@ -48,6 +53,7 @@ enum MSMoodType: CaseIterable {
     }
     
     static func random() -> MSMoodType {
-        return MSMoodType.allCases.randomElement() ?? .happy
+        let selectableMoods = MSMoodType.allCases.filter { $0 != .moodless }
+        return selectableMoods.randomElement() ?? .happy
     }
 }

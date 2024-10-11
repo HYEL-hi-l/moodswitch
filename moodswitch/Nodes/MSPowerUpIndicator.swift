@@ -11,6 +11,7 @@ import Foundation
 enum MSPowerUpType: String, CaseIterable {
     case surge = "Surge"
     case slow = "Slow"
+    case invincible = "Invincible"
 }
 
 protocol MSPowerUpIndicatorDelegate: AnyObject {
@@ -19,320 +20,406 @@ protocol MSPowerUpIndicatorDelegate: AnyObject {
 }
 
 class MSPowerUpIndicator: SKNode {
-    
-    // MARK: - Constants
-    
+        
     private struct Constants {
-        static let backgroundAlpha: CGFloat = 0.2
+        static let backgroundAlpha: CGFloat = 0.35
         static let animationDuration: TimeInterval = 0.5
         static let cornerRadius: CGFloat = 10.0
-        static let squareSize: CGFloat = 35.0
-        static let squareCornerRadius: CGFloat = 8.0
+        static let circleLineWidth: CGFloat = 8.0
+        static let powerUpCircleLineWidth: CGFloat = 12.0
+//        static let moodSegmentIncrement: CGFloat = 90.0
+        static let moodSegmentIncrement: CGFloat = 30.0
+        static let powerUpDecrement: CGFloat = 72.0
+        static let moodSwitcherSize: CGFloat = 50.0
+        static let glowExpandFactor: CGFloat = 3.0
+        static let glowDuration: TimeInterval = 0.5
     }
-    
-    // MARK: - Properties
-    
+        
     weak var delegate: MSPowerUpIndicatorDelegate?
     
-    private var roundedSquare: SKShapeNode?
-    private var moodSwitcherTexture: SKSpriteNode?
-    
     private let layoutInfo: MSLayoutInfo
-    private var moodProgressBars: [MSMoodType: ProgressBar] = [:]
+    private let mainWidth: CGFloat
+    private var moodProgressSegments: [MSMoodType: CGFloat] = [:]
     
     private var isPowerUpActive = false
-    private var bigBar: SKShapeNode?
-    private var bigBarProgress: CGFloat = 1.0 {
+    private var powerUpProgress: CGFloat = 360.0 {
         didSet {
-            updateBigBar()
+            updateGlowNodeScale()
+            updatePowerUpCircle()
         }
     }
     
     private let backgroundNode: SKShapeNode = SKShapeNode()
     private let strokeNode: SKShapeNode = SKShapeNode()
-
-    // MARK: - Initializer
+    private let powerUpCircle: SKShapeNode = SKShapeNode()
+    
+    private var moodSegments: [MSMoodType: SKShapeNode] = [:]
+    private let moodColors: [MSMoodType: UIColor] = {
+        return [
+            .angry: MSMoodType.angry.color,
+            .happy: MSMoodType.happy.color,
+            .sad: MSMoodType.sad.color,
+            .inlove: MSMoodType.inlove.color
+        ]
+    }()
+    
+    private var moodSwitcherTexture: SKSpriteNode?
+    private var glowNode: SKEffectNode?
+    private var originalBackgroundSize: CGSize?
+    
     
     init(layoutInfo: MSLayoutInfo) {
         self.layoutInfo = layoutInfo
+        self.mainWidth = layoutInfo.powerUpIndicatorWidth * 0.95
         super.init()
         setupBackgroundNode()
         setupStrokeNode()
-        setupProgressBars()
-        setupBigBar()
-        setupRoundedSquare()
+        setupMoodSegments()
+        setupPowerUpCircle()
+        setupMoodSwitcher()
+        setUpLines()
+        setupGlowNode()
     }
 
-    
     required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    
-    // MARK: - ProgressBar Class
-    
-    private class ProgressBar {
-        let mood: MSMoodType
-        let node: SKNode
-        let fillNode: SKShapeNode
-        let size: CGSize
-
-        private var _progress: CGFloat
-        var progress: CGFloat {
-            get {
-                return _progress
-            }
-            set {
-                _progress = min(max(newValue, 0.03), 1.0)
-                updateProgress()
-            }
-        }
-
-        init(mood: MSMoodType, position: CGPoint, size: CGSize, cornerRadius: CGFloat) {
-            // Initialize stored properties first
-            self.mood = mood
-            self.size = size
-            self.node = SKNode()
-            self.node.position = position
-            self._progress = 0.03
-
-            // Now, create the fillNode without using 'self' methods
-            let rect = CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height * 0.03)
-            let path = ProgressBar.createTopRoundedRectPath(rect: rect, cornerRadius: cornerRadius)
-            self.fillNode = SKShapeNode(path: path)
-            self.fillNode.fillColor = mood.color
-            self.fillNode.strokeColor = .clear
-            self.fillNode.alpha = 1.0
-            self.fillNode.zPosition = 1
-            self.fillNode.position = CGPoint(x: 0, y: 0)
-            self.node.addChild(self.fillNode)
-
-            // Now that all properties are initialized, we can use 'self'
-            self.progress = 0.03
-        }
-
-        private func updateProgress() {
-//            fillNode.yScale = progress
-            let rect = CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height * progress)
-            let path = ProgressBar.createTopRoundedRectPath(rect: rect, cornerRadius: 8.0)
-            fillNode.path = path
-            // No need to adjust position since anchor point is at center
-        }
-
-        // Make this method static so it doesn't require 'self'
-        private static func createTopRoundedRectPath(rect: CGRect, cornerRadius: CGFloat) -> CGPath {
-            let path = CGMutablePath()
-            let radius = min(cornerRadius, rect.width / 2, rect.height / 2)
-            
-            let topLeft = CGPoint(x: rect.minX, y: rect.maxY)
-            let topRight = CGPoint(x: rect.maxX, y: rect.maxY)
-            let bottomRight = CGPoint(x: rect.maxX, y: rect.minY)
-            let bottomLeft = CGPoint(x: rect.minX, y: rect.minY)
-            
-            path.move(to: bottomLeft)
-            path.addLine(to: bottomRight)
-            path.addLine(to: CGPoint(x: topRight.x, y: topRight.y - radius))
-            path.addQuadCurve(to: CGPoint(x: topRight.x - radius, y: topRight.y), control: topRight)
-            path.addLine(to: CGPoint(x: topLeft.x + radius, y: topLeft.y))
-            path.addQuadCurve(to: CGPoint(x: topLeft.x, y: topLeft.y - radius), control: topLeft)
-            path.addLine(to: bottomLeft)
-            path.closeSubpath()
-            
-            return path
-        }
-    }
+}
 
 
-    
-    // MARK: - Setup Methods
+// MARK: Setup
+extension MSPowerUpIndicator {
     
     private func setupBackgroundNode() {
-        let size = CGSize(width: layoutInfo.powerUpIndicatorWidth, height: layoutInfo.powerUpIndicatorHeight)
-        let rect = CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height)
-        let path = createTopRoundedRectPath(rect: rect, cornerRadius: Constants.cornerRadius)
-        backgroundNode.path = path
-        backgroundNode.fillColor = .darkGray
-        backgroundNode.strokeColor = .clear
-//        backgroundNode.alpha = Constants.backgroundAlpha
-        backgroundNode.zPosition = 1
+        let radius = mainWidth / 2
+        let segmentAngle = 90.0
+        let moods: [MSMoodType] = [.angry, .happy, .sad, .inlove]
+        
+        for (index, mood) in moods.enumerated() {
+            let startAngle = CGFloat(index) * CGFloat(segmentAngle) * CGFloat.pi / 180
+            let endAngle = startAngle + CGFloat(segmentAngle) * CGFloat.pi / 180
+            
+            let path = createSectorPath(radius: radius, startAngle: startAngle, endAngle: endAngle)
+            
+            let segment = SKShapeNode(path: path)
+            segment.fillColor = moodColors[mood] ?? .white.withAlphaComponent(0.5)
+            segment.strokeColor = .clear
+            segment.zPosition = 3
+            segment.alpha = Constants.backgroundAlpha
+            
+            backgroundNode.addChild(segment)
+        }
+        
         addChild(backgroundNode)
     }
     
+    private func setupGlowNode() {
+        let glowBaseNode = SKShapeNode()
+        let radius = mainWidth / 4
+        let segmentAngle = 90.0
+        let moods: [MSMoodType] = [.angry, .happy, .sad, .inlove]
+        
+        for (index, mood) in moods.enumerated() {
+            let startAngle = CGFloat(index) * CGFloat(segmentAngle) * CGFloat.pi / 180
+            let endAngle = startAngle + CGFloat(segmentAngle) * CGFloat.pi / 180
+            
+            let path = createSectorPath(radius: radius, startAngle: startAngle, endAngle: endAngle)
+            
+            let segment = SKShapeNode(path: path)
+            segment.fillColor = moodColors[mood] ?? .white.withAlphaComponent(0.5)
+            segment.strokeColor = .clear
+            segment.zPosition = 3
+            
+            glowBaseNode.addChild(segment)
+        }
+        
+        glowNode = SKEffectNode()
+        glowNode?.shouldRasterize = true
+        glowNode?.filter = CIFilter(name: "CIGaussianBlur", parameters: ["inputRadius": 2.5])
+        glowNode?.zPosition = 1
+        addChild(glowNode!)
+        glowNode?.addChild(glowBaseNode)
+    }
+    
     private func setupStrokeNode() {
-        let size = CGSize(width: layoutInfo.powerUpIndicatorWidth + 2.0, height: layoutInfo.powerUpIndicatorHeight + 2.0)
-        let rect = CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height)
-        let path = createTopRoundedRectPath(rect: rect, cornerRadius: Constants.cornerRadius)
-        strokeNode.path = path
-        strokeNode.fillColor = .white
+        let radius = layoutInfo.powerUpIndicatorWidth / 2
+        strokeNode.path = CGPath(ellipseIn: CGRect(x: -radius, y: -radius, width: 2*radius, height: 2*radius), transform: nil)
+        strokeNode.fillColor = .black
         strokeNode.strokeColor = .black
-        strokeNode.lineWidth = 0.5
-//        strokeNode.alpha = Constants.backgroundAlpha
-        strokeNode.zPosition = 0
+        strokeNode.lineWidth = 2.0
+        strokeNode.zPosition = 2
         addChild(strokeNode)
     }
     
-    private func setupProgressBars() {
-        let barWidth = layoutInfo.powerUpIndicatorWidth / 4
-        let barHeight = layoutInfo.powerUpIndicatorHeight
-        let startX = -layoutInfo.powerUpIndicatorWidth / 2 + barWidth / 2
-        let moods = MSMoodManager.shared.getActiveMoodSequence()
+    private func setupMoodSegments() {
+        let radius = mainWidth / 2
+        let segmentAngle = 90.0
+        let moods: [MSMoodType] = [.angry, .happy, .sad, .inlove]
+        
         for (index, mood) in moods.enumerated() {
-            let xPosition = startX + CGFloat(index) * barWidth
-            let position = CGPoint(x: xPosition, y: 0)
-            let size = CGSize(width: barWidth, height: barHeight)
-            let progressBar = ProgressBar(mood: mood, position: position, size: CGSize(width: size.width, height: size.height - 5.0), cornerRadius: Constants.cornerRadius)
-            moodProgressBars[mood] = progressBar
-            addChild(progressBar.node)
+            let startAngle = CGFloat(index) * CGFloat(segmentAngle) * CGFloat.pi / 180
+            let initialProgress = 0.0
+            let filledAngle = initialProgress * CGFloat.pi / 180
+            let endAngle = startAngle + CGFloat(filledAngle)
+            
+            let path = createSectorPath(radius: radius, startAngle: startAngle, endAngle: endAngle)
+            
+            let segment = SKShapeNode(path: path)
+            segment.fillColor = moodColors[mood] ?? .white.withAlphaComponent(0.5)
+            segment.strokeColor = .clear
+            segment.zPosition = 3
+            segment.alpha = 1.0
+            
+            addChild(segment)
+            moodSegments[mood] = segment
+            moodProgressSegments[mood] = 0.0
         }
     }
     
-    private func setupBigBar() {
-        let size = CGSize(width: layoutInfo.powerUpIndicatorWidth, height: layoutInfo.powerUpIndicatorHeight)
-        let rect = CGRect(x: -size.width / 2, y: -size.height / 2, width: size.width, height: size.height)
-        let path = createTopRoundedRectPath(rect: rect, cornerRadius: Constants.cornerRadius)
-        bigBar = SKShapeNode(path: path)
-        bigBar?.fillColor = .green
-        bigBar?.strokeColor = .clear
-        bigBar?.alpha = 0.0
-        bigBar?.position = CGPoint(x: 0, y: 0)
-        bigBar?.zPosition = 2
-        bigBar?.yScale = 1.0
-        addChild(bigBar!)
+    private func setupPowerUpCircle() {
+        let radius = mainWidth / 2 + Constants.powerUpCircleLineWidth / 2 + 5.0
+        let path = CGPath(ellipseIn: CGRect(x: -radius, y: -radius, width: 2*radius, height: 2*radius), transform: nil)
+        powerUpCircle.path = path
+        powerUpCircle.fillColor = .clear
+        powerUpCircle.strokeColor = UIColor(hex: "#6D00F9")
+//        powerUpCircle.lineWidth = Constants.powerUpCircleLineWidth
+        powerUpCircle.zPosition = 5
+        powerUpCircle.alpha = 0.0
+//        addChild(powerUpCircle)
+
     }
     
-    private func setupRoundedSquare() {
-        let squareSize = Constants.squareSize
-        let cornerRadius = Constants.squareCornerRadius
+    private func setUpLines() {
+        let strokeSize = 1.0
+        let lineLength = mainWidth
         
-        let rect = CGRect(x: -squareSize/2, y: -squareSize/2, width: squareSize, height: squareSize)
-        let path = CGPath(roundedRect: rect, cornerWidth: cornerRadius, cornerHeight: cornerRadius, transform: nil)
-        
-        roundedSquare = SKShapeNode(path: path)
-        roundedSquare?.fillColor = .clear
-        roundedSquare?.strokeColor = .clear
-        roundedSquare?.lineWidth = 2
-        roundedSquare?.position = CGPoint(x: 0, y: -layoutInfo.powerUpIndicatorHeight / 2 - squareSize / 3)
-        roundedSquare?.zPosition = 3
-        addChild(roundedSquare!)
-        
-        let texture = SKTexture(imageNamed: "ms_mood_switcher")
-        moodSwitcherTexture = SKSpriteNode(texture: texture, size: CGSize(width: squareSize, height: squareSize))
+        let hline = SKSpriteNode(color: .black, size: .init(width: lineLength, height: strokeSize))
+        let vline = SKSpriteNode(color: .black, size: .init(width: strokeSize, height: lineLength))
+        hline.position = .init(x: 0, y: 0)
+        vline.position = .init(x: 0, y: 0)
+        hline.zPosition = 3
+        vline.zPosition = 3
+
+    
+        addChild(hline)
+        addChild(vline)
+    }
+    
+    private func setupMoodSwitcher() {
+        let texture = SKTexture(imageNamed: "ms_mood_switcher2")
+        moodSwitcherTexture = SKSpriteNode(texture: texture)
         moodSwitcherTexture?.position = CGPoint.zero
-        roundedSquare?.addChild(moodSwitcherTexture!)
-        
+        moodSwitcherTexture?.zPosition = 4
+        addChild(moodSwitcherTexture!)
     }
     
-    private func createTopRoundedRectPath(rect: CGRect, cornerRadius: CGFloat) -> CGPath {
+    private func createSectorPath(radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat) -> CGPath {
         let path = CGMutablePath()
-        let radius = min(cornerRadius, rect.width / 2, rect.height / 2)
-        
-        let topLeft = CGPoint(x: rect.minX, y: rect.maxY)
-        let topRight = CGPoint(x: rect.maxX, y: rect.maxY)
-        let bottomRight = CGPoint(x: rect.maxX, y: rect.minY)
-        let bottomLeft = CGPoint(x: rect.minX, y: rect.minY)
-        
-        path.move(to: bottomLeft)
-        path.addLine(to: bottomRight)
-        path.addLine(to: CGPoint(x: topRight.x, y: topRight.y - radius))
-        path.addQuadCurve(to: CGPoint(x: topRight.x - radius, y: topRight.y), control: topRight)
-        path.addLine(to: CGPoint(x: topLeft.x + radius, y: topLeft.y))
-        path.addQuadCurve(to: CGPoint(x: topLeft.x, y: topLeft.y - radius), control: topLeft)
-        path.addLine(to: bottomLeft)
+        path.move(to: CGPoint.zero)
+        path.addArc(center: CGPoint.zero, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
         path.closeSubpath()
-        
         return path
     }
     
-    // MARK: - Progress Management
+}
+
+
+//
+extension MSPowerUpIndicator {
     
     func increaseProgress(for mood: MSMoodType) {
         guard !isPowerUpActive else { return }
-        if let progressBar = moodProgressBars[mood] {
-            let newProgress = min(progressBar.progress + (1.0), 1.0)
-            progressBar.progress = newProgress
-            if checkIfAllBarsFull() {
-                activatePowerUp()
+        guard let currentProgress = moodProgressSegments[mood] else { return }
+        let newProgress = min(currentProgress + Constants.moodSegmentIncrement, 90.0)
+                
+        animateProgress(for: mood, to: newProgress, duration: 0.1)  {
+            if newProgress == 90.0 && self.checkIfAllSegmentsFull() {
+                self.activatePowerUp()
             }
         }
     }
     
-    private func checkIfAllBarsFull() -> Bool {
-        for progressBar in moodProgressBars.values {
-            if progressBar.progress < 1.0 {
+    private func animateProgress(for mood: MSMoodType, to newProgress: CGFloat, duration: TimeInterval, completion: @escaping () -> ()) {
+        guard let currentProgress = moodProgressSegments[mood] else { return }
+        let progressDifference = newProgress - currentProgress
+        guard progressDifference > 0 else { return }
+
+        let steps = 30
+        let stepDuration = duration / Double(steps)
+        let progressIncrement = progressDifference / CGFloat(steps)
+
+        var actions: [SKAction] = []
+
+        for _ in 0..<steps {
+            let incrementAction = SKAction.run { [weak self] in
+                guard let self = self else { return }
+                if let current = self.moodProgressSegments[mood] {
+                    let updatedProgress = min(current + progressIncrement, newProgress)
+                    self.moodProgressSegments[mood] = updatedProgress
+                    self.updateMoodSegment(mood: mood, progress: updatedProgress)
+                }
+            }
+            let waitAction = SKAction.wait(forDuration: stepDuration)
+            actions.append(incrementAction)
+            actions.append(waitAction)
+        }
+
+        let sequence = SKAction.sequence(actions)
+        let actionKey = "animateProgress_\(mood)"
+        run(sequence) {
+            completion()
+        }
+    }
+    
+    private func updateMoodSegment(mood: MSMoodType, progress: CGFloat) {
+        guard let segment = moodSegments[mood] else { return }
+        let segmentAngle = 90.0
+        let filledAngle = progress * CGFloat.pi / 180
+        let moods: [MSMoodType] = [.angry, .happy, .sad, .inlove]
+        
+        let index = moods.firstIndex(of: mood)
+        let startAngle = CGFloat(index ?? 0) * CGFloat(segmentAngle) * CGFloat.pi / 180
+        let endAngle = startAngle + CGFloat(filledAngle)
+        
+        let newPath = createPartialSectorPath(radius: mainWidth / 2, startAngle: startAngle, endAngle: endAngle)
+        segment.path = newPath
+    }
+    
+    private func createPartialSectorPath(radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat) -> CGPath {
+        let path = CGMutablePath()
+        path.move(to: CGPoint.zero)
+        path.addArc(center: CGPoint.zero, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+        path.closeSubpath()
+        return path
+    }
+    
+    private func checkIfAllSegmentsFull() -> Bool {
+        for (_, progress) in moodProgressSegments {
+            if progress < 90.0 {
                 return false
             }
         }
         return true
     }
     
-    func decreaseBigBarProgress() {
+    func decreasePowerUpProgress() {
         guard isPowerUpActive else { return }
-        bigBarProgress -= 0.2
-        if bigBarProgress <= 0.0 {
+        powerUpProgress -= Constants.powerUpDecrement
+        if powerUpProgress <= 0.0 {
+            powerUpProgress = 0.0
             deactivatePowerUp()
         }
     }
     
-    private func updateBigBar() {
-        bigBarProgress = min(max(bigBarProgress, 0.0), 1.0)
-        bigBar?.yScale = bigBarProgress
-        // No need to adjust position since anchor point is at center
+    private func updatePowerUpCircle() {
+        let radius = mainWidth / 2 + Constants.powerUpCircleLineWidth / 2 + 5.0
+        let startAngle = -CGFloat.pi / 2 
+        let endAngle = startAngle + (powerUpProgress * CGFloat.pi / 180)
+        
+        let path = CGMutablePath()
+        path.addArc(center: CGPoint.zero, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+        powerUpCircle.path = path
     }
     
-    // MARK: - Power-Up Management
+    private func updateGlowNodeScale() {
+        let maxProgress: CGFloat = 360.0
+        let minScale: CGFloat = 1.0
+        let maxScale: CGFloat = Constants.glowExpandFactor
+        
+        let progressRatio = powerUpProgress / maxProgress
+        let newScale = minScale + (maxScale - minScale) * progressRatio
+        
+        let fadeKey = "glowFade"
+        
+        let fadeAction = SKAction.fadeAlpha(to: progressRatio, duration: 0.1)
+        glowNode?.run(fadeAction, withKey: fadeKey)
+    }
     
+
     private func activatePowerUp() {
         guard !isPowerUpActive else { return }
         isPowerUpActive = true
         
-        // Fade out mood progress bars
-        let fadeOut = SKAction.fadeAlpha(to: 0.0, duration: 0.3)
-        for progressBar in moodProgressBars.values {
-            progressBar.node.run(fadeOut)
+        let fadeOut = SKAction.fadeAlpha(to: 0.0, duration: Constants.animationDuration)
+        for segment in moodSegments.values {
+            segment.run(fadeOut)
         }
         
-        // Fade in bigBar
-        let fadeIn = SKAction.fadeAlpha(to: 1.0, duration: 0.3)
-        bigBar?.run(fadeIn)
+        powerUpCircle.alpha = 1.0
+        let rotateAction = SKAction.repeatForever(SKAction.rotate(byAngle: CGFloat.pi * 2, duration: 5.0))
+        powerUpCircle.run(rotateAction, withKey: "rotation")
         
-        // Start glowing effect
-        let glowAction = SKAction.sequence([
-            SKAction.fadeAlpha(to: 0.7, duration: 0.5),
-            SKAction.fadeAlpha(to: 1.0, duration: 0.5)
-        ])
-        bigBar?.run(SKAction.repeatForever(glowAction))
+        expandAndGlow()
         
-        // Notify delegate
         delegate?.powerUpActivated()
     }
     
     private func deactivatePowerUp() {
+        guard isPowerUpActive else { return }
         isPowerUpActive = false
-        bigBar?.removeAllActions()
         
-        // Fade out bigBar
-        let fadeOut = SKAction.fadeAlpha(to: 0.0, duration: 0.3)
-        bigBar?.run(fadeOut)
+        powerUpCircle.removeAction(forKey: "rotation")
+        let fadeOut = SKAction.fadeAlpha(to: 0.0, duration: Constants.animationDuration)
+        powerUpCircle.run(fadeOut)
         
-        // Reset mood progress bars and fade in
-        for progressBar in moodProgressBars.values {
-            progressBar.progress = 0.0
-            let fadeIn = SKAction.fadeAlpha(to: 1.0, duration: 0.3)
-            progressBar.node.run(fadeIn)
+        powerUpProgress = 360.0
+        
+        for (mood, _) in moodProgressSegments {
+            moodProgressSegments[mood] = 0.0
+            updateMoodSegment(mood: mood, progress: 0.0)
+            let fadeIn = SKAction.fadeAlpha(to: 1.0, duration: Constants.animationDuration)
+            moodSegments[mood]?.run(fadeIn)
         }
         
-        // Notify delegate
+        contractAndRemoveGlow()
+        
         delegate?.powerUpDeactivated()
     }
     
-    /// Resets the meter and deactivates any active power-up.
+    private func expandAndGlow() {
+        guard let glowNode = glowNode else { return }
+        
+        originalBackgroundSize = backgroundNode.frame.size
+        let expandedSize = CGSize(width: originalBackgroundSize!.width * Constants.glowExpandFactor,
+                                  height: originalBackgroundSize!.height * Constants.glowExpandFactor)
+        
+        let expandAction = SKAction.scale(to: Constants.glowExpandFactor, duration: Constants.glowDuration)
+        let fadeInAction = SKAction.fadeAlpha(to: 1.0, duration: Constants.glowDuration)
+        
+        glowNode.run(SKAction.group([expandAction, fadeInAction]))
+        
+        // Add a subtle pulsing effect
+        let pulseAction = SKAction.sequence([
+            SKAction.scale(to: Constants.glowExpandFactor * 1.05, duration: 0.5),
+            SKAction.scale(to: Constants.glowExpandFactor, duration: 0.5)
+        ])
+        glowNode.run(SKAction.repeatForever(pulseAction))
+    }
+
+    private func contractAndRemoveGlow() {
+        guard let glowNode = glowNode, let originalSize = originalBackgroundSize else { return }
+        
+        let contractAction = SKAction.scale(to: 1.0, duration: Constants.glowDuration)
+        let fadeOutAction = SKAction.fadeAlpha(to: 0.0, duration: Constants.glowDuration)
+        
+        glowNode.removeAllActions() // Remove the pulsing effect
+        
+        glowNode.run(SKAction.group([contractAction, fadeOutAction])) { [weak self] in
+            self?.glowNode?.setScale(1.0)
+            self?.glowNode?.alpha = 0.0
+        }
+    }
+    
     func resetMeter() {
         if isPowerUpActive {
             deactivatePowerUp()
         } else {
-            for progressBar in moodProgressBars.values {
-                progressBar.progress = 0.0
+            for (mood, _) in moodProgressSegments {
+                moodProgressSegments[mood] = 0.0
+                updateMoodSegment(mood: mood, progress: 0.0)
             }
         }
     }
+    
 }

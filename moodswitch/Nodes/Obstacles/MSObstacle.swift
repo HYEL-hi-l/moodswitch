@@ -5,7 +5,6 @@
 //  Created by Sam Richard on 10/2/24.
 //
 
-
 import SpriteKit
 
 class MSObstacle: SKNode {
@@ -13,24 +12,26 @@ class MSObstacle: SKNode {
     var moods: [MSMoodType] = []
     var layoutInfo: MSLayoutInfo
     
-    private var initialRotationDuration: TimeInterval = 0
-    private var currentRotationDuration: TimeInterval = 0
-    private let rotationActionKey = "rotation"
+    var initialRotationDuration: TimeInterval = 0
+    var currentRotationDuration: TimeInterval = 0
+    let rotationActionKey = "rotation"
     
     required init(layoutInfo: MSLayoutInfo) {
         self.layoutInfo = layoutInfo
         super.init()
     }
-
+    
     required init?(coder aDecoder: NSCoder) { fatalError("init(coder:) has not been implemented") }
     
     func setup(at position: CGPoint) {
         self.position = position
         createShape()
     }
-
+    
+    /// overridden by subclasses
     func createShape() {  }
-
+    func updateRotationSpeed(to speedMultiplier: CGFloat) {  }
+    
     func rotate(duration: TimeInterval) {
         removeAction(forKey: rotationActionKey)
         
@@ -42,24 +43,4 @@ class MSObstacle: SKNode {
         run(repeatForever, withKey: rotationActionKey)
     }
     
-
-    func speedUpRotation(by speedUpFactor: Double) {
-        currentRotationDuration *= speedUpFactor
-        updateRotation()
-    }
-    
-    func slowDownRotation(by slowDownFactor: Double) {
-        currentRotationDuration *= slowDownFactor
-        updateRotation()
-    }
-    
-    func resetRotationSpeed() {
-        currentRotationDuration = initialRotationDuration
-        updateRotation()
-    }
-    
-
-    private func updateRotation() {
-        rotate(duration: currentRotationDuration)
-    }
 }

@@ -21,7 +21,7 @@ class MSBall: SKSpriteNode {
     init(radius: CGFloat) {
         self.radius = radius
 
-        let initialMood = MSMoodType.happy
+        let initialMood = MSMoodType.moodless
         self.mood = initialMood
         let texture = SKTexture(imageNamed: initialMood.textureName)
         
@@ -40,6 +40,12 @@ class MSBall: SKSpriteNode {
         physicsBody?.affectedByGravity = true
         physicsBody?.mass = 2.5
     }
+    
+}
+
+
+// MARK: Helpers
+extension MSBall {
     
     func jump(_ effect: MSJumpEffect) {
         physicsBody?.velocity = .zero
@@ -76,13 +82,25 @@ class MSBall: SKSpriteNode {
         let shrink = SKAction.scale(to: 0.8, duration: 0.05)
         let scaleToNormal = SKAction.scale(to: 1.0, duration: 0.05)
 
-        let group1 = SKAction.group([fadeOut, shrink])
-        let group2 = SKAction.group([fadeIn, scaleToNormal])
-        let sequence = SKAction.sequence([group1, textureChange, group2])
+        let sequence = SKAction.sequence([shrink, textureChange, scaleToNormal])
         
         run(sequence) { [weak self] in
             self?.mood = targetMood
             self?.isChangingMood = false
         }
+        
+        
+        let particleEmitter = SKEmitterNode(fileNamed: "MoodFlashFaces") ?? SKEmitterNode()
+        particleEmitter.particleTexture = SKTexture(imageNamed: targetMood.textureName)
+        particleEmitter.position = CGPoint(x: 0, y: 0)
+        particleEmitter.zPosition = -1
+        addChild(particleEmitter)
+        
+        let removeEmitter = SKAction.sequence([
+            SKAction.wait(forDuration: 1.0),
+            SKAction.removeFromParent()
+        ])
+        particleEmitter.run(removeEmitter)
     }
+    
 }

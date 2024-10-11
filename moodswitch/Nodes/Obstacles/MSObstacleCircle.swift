@@ -36,6 +36,10 @@ class MSObstacleCircle: MSObstacle {
         rotate(duration: layoutInfo.rotationDuration)
     }
     
+    override func updateRotationSpeed(to speedMultiplier: CGFloat) {
+        self.speed = speedMultiplier
+    }
+    
     private func createArcPath(outerRadius: CGFloat, innerRadius: CGFloat, startAngle: CGFloat, endAngle: CGFloat) -> CGPath {
         let path = UIBezierPath()
         

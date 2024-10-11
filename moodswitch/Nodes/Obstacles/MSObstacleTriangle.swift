@@ -10,10 +10,11 @@ import Foundation
 
 class MSObstacleTriangle: MSObstacle {
     override func createShape() {
-        let sideLength: CGFloat = layoutInfo.maxObstacleWidth
-        let thickness: CGFloat = layoutInfo.obstacleThickness * 0.75
+        let sideLength: CGFloat = layoutInfo.maxObstacleWidth * 1.1
+        let thickness: CGFloat = layoutInfo.obstacleThickness * 0.6
         let gapSize: CGFloat = 7.5
         let moodSequence = MSMoodManager.shared.getRandomMoodSequence()
+        let initialDuration = layoutInfo.rotationDuration
         
         let numberOfSections = 3
         let height = sideLength * sqrt(3) / 2
@@ -30,7 +31,14 @@ class MSObstacleTriangle: MSObstacle {
             moods.append(moodSequence[i])
         }
         
-        rotate(duration: layoutInfo.rotationDuration)
+        rotate(duration: initialDuration)
+        
+        initialRotationDuration = initialDuration
+        currentRotationDuration = initialDuration
+    }
+    
+    override func updateRotationSpeed(to speedMultiplier: CGFloat) {
+        self.speed = speedMultiplier
     }
     
     private func createSectionPath(sideLength: CGFloat, height: CGFloat, thickness: CGFloat, gapSize: CGFloat, section: Int) -> CGPath {
@@ -42,17 +50,17 @@ class MSObstacleTriangle: MSObstacle {
         let gapTriangleHeight = sqrt((gapSize * gapSize) - (gapHalf * gapHalf))
         
         switch section {
-        case 0: // Bottom side
+        case 0: // Bottom
             path.move(to: CGPoint(x: -halfSide + gapSize, y: -height / 3))
             path.addLine(to: CGPoint(x: halfSide - gapSize, y: -height / 3))
             path.addLine(to: CGPoint(x: halfSide - gapSize - innerSideOffset, y: -height / 3 + thickness))
             path.addLine(to: CGPoint(x: -halfSide + gapSize + innerSideOffset, y: -height / 3 + thickness))
-        case 1: // Right side
+        case 1: // Right
             path.move(to: CGPoint(x: halfSide - gapHalf, y: -height / 3 + gapTriangleHeight))
             path.addLine(to: CGPoint(x: gapHalf, y: 2 * height / 3 - (2 * gapHalf / 3)))
             path.addLine(to: CGPoint(x: gapHalf, y: 2 * height / 3 - innerSideHypot))
             path.addLine(to: CGPoint(x: halfSide - gapHalf - innerSideOffset, y: -height / 3 + thickness + gapTriangleHeight))
-        case 2: // Left side
+        case 2: // Left
             path.move(to: CGPoint(x: -halfSide + gapHalf, y: -height / 3 + gapTriangleHeight))
             path.addLine(to: CGPoint(x: -gapHalf, y: 2 * height / 3 - (2 * gapHalf / 3)))
             path.addLine(to: CGPoint(x: -gapHalf, y: 2 * height / 3 - innerSideHypot))

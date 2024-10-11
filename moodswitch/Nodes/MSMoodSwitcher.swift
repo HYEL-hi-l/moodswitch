@@ -17,8 +17,8 @@ class MSMoodSwitcher: SKSpriteNode {
         self.moods = moods
         self.radius = radius
         self.lastObstacleMoods = lastObstacleMoods
-        let texture = SKTexture(imageNamed: "ms_mood_switcher")
-        super.init(texture: texture, color: .black, size: texture.size())
+        let texture = SKTexture(imageNamed: "ms_mood_switcher2")
+        super.init(texture: texture, color: .black, size: CGSize(width: radius * 2, height: radius * 2))
         setupPhysics()
         startPulsingAnimation() 
     }
@@ -33,13 +33,20 @@ class MSMoodSwitcher: SKSpriteNode {
         physicsBody?.collisionBitMask = MSPhysicsCategory.none
     }
     
+}
+
+
+// MARK: Helpers
+extension MSMoodSwitcher {
+    
     func getRandomMood(except currentMood: MSMoodType) -> MSMoodType {
         let validMoods = moods.filter { lastObstacleMoods.contains($0) }
-        
         var newMood = validMoods.randomElement() ?? validMoods.first
         while newMood == currentMood {
             newMood = validMoods.randomElement() ?? validMoods.first
         }
+        
+        print(newMood, currentMood)
         return newMood ?? currentMood
     }
     
@@ -55,4 +62,5 @@ class MSMoodSwitcher: SKSpriteNode {
         
         run(repeatForever)
     }
+    
 }

@@ -39,22 +39,23 @@ class MSGameContext {
     func configureLayoutInfo() {
         let screenSize = UIScreen.main.bounds.size
         
-        layoutInfo.ballRadius = screenSize.width / 20
+        layoutInfo.ballRadius = screenSize.width / 15
+//        layoutInfo.ballRadius = screenSize.width / 20
         layoutInfo.moodSwitcherRadius = layoutInfo.ballRadius - 5
-        layoutInfo.ballYOffset = screenSize.height * 0.15
+        layoutInfo.ballYOffset = screenSize.height * 0.25
         layoutInfo.ballStartPosition = CGPoint(x: screenSize.width / 2, y: layoutInfo.ballYOffset)
         
         layoutInfo.ledgeYPosition = layoutInfo.ballStartPosition.y - (layoutInfo.ballRadius * 1.05)
     
         layoutInfo.firstObstacleYOffset = screenSize.height * 0.8
         layoutInfo.firstObstacleYPosition = (screenSize.height / 2) + layoutInfo.firstObstacleYOffset
-//        layoutInfo.firstObstacleYPosition = (screenSize.height / 2)
         layoutInfo.maxObstacleWidth = screenSize.width * 0.8
         layoutInfo.obstacleThickness = screenSize.width / 14
         layoutInfo.obstacleSpacing = layoutInfo.maxObstacleWidth * 1.75
         
-        layoutInfo.powerUpIndicatorWidth = screenSize.width * 0.04
-        layoutInfo.powerUpIndicatorHeight = screenSize.height * 0.35
+        layoutInfo.powerUpIndicatorWidth = screenSize.width * 0.2
+        layoutInfo.powerUpIndicatorHeight = screenSize.width * 0.2
+//        layoutInfo.powerUpIndicatorHeight = screenSize.height * 0.35
         layoutInfo.powerUpIndicatorCornerRadius = 15
     }
 }

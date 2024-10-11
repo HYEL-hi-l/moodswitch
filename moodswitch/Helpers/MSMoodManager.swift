@@ -15,15 +15,25 @@ class MSMoodManager {
     
     func getActiveMoodSequence() -> [MSMoodType] {
          return activeMoods
-     }
+    }
     
     func getRandomMoodSequence() -> [MSMoodType] {
          return activeMoods.map { $0 }.shuffled()
-     }
+    }
+    
+    func getRandomMoodSequenceForDoubleCircle() -> [MSMoodType] {
+        var moods = activeMoods.filter { $0 != .angry }.shuffled()
+        moods = moods.filter { $0 != .inlove }.shuffled()
+        
+        moods.insert(.inlove, at: 1)
+        moods.insert(.angry, at: 3)
+        
+        return moods
+    }
 
-     func getRandomMood() -> MSMoodType {
-         return activeMoods.map { $0 }.randomElement() ?? .happy
-     }
+    func getRandomMood() -> MSMoodType {
+        return activeMoods.map { $0 }.randomElement() ?? .happy
+    }
     
     func isMoodMatch(ball: MSBall, obstacle: SKNode?) -> Bool {
         guard let obstacle = obstacle as? SKShapeNode else { return false }

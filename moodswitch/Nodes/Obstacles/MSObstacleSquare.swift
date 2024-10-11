@@ -15,6 +15,7 @@ class MSObstacleSquare: MSObstacle {
         let innerPadding: CGFloat = 30
         let gapSize: CGFloat = 15
         let moodSequence = MSMoodManager.shared.getRandomMoodSequence()
+        let initialDuration = layoutInfo.rotationDuration
         
         let numberOfSections = 4
         
@@ -30,7 +31,14 @@ class MSObstacleSquare: MSObstacle {
             moods.append(moodSequence[i])
         }
         
-        rotate(duration: layoutInfo.rotationDuration)
+        rotate(duration: initialDuration)
+        
+        initialRotationDuration = initialDuration
+        currentRotationDuration = initialDuration
+    }
+    
+    override func updateRotationSpeed(to speedMultiplier: CGFloat) {
+        self.speed = speedMultiplier
     }
     
     private func createSectionPath(sideLength: CGFloat, innerPadding: CGFloat, gapSize: CGFloat, section: Int) -> CGPath {
