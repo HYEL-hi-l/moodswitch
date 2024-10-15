@@ -49,7 +49,7 @@ class MSObstacleManager {
         let yPosition: CGFloat
 
         let obstacleTypes = getAvailableObstacleTypes(for: score)
-        
+
         if obstacles.count < 1 {
             obstacleType = MSObstacleCircle.self
             yPosition = scene.layoutInfo.firstObstacleYPosition
@@ -79,25 +79,19 @@ class MSObstacleManager {
     }
     
     private func getAvailableObstacleTypes(for score: Int) -> [MSObstacle.Type] {
-        var availableTypes: [MSObstacle.Type] = [MSObstacleCircle.self]
-
-        if score >= 0 {
-            availableTypes = [MSObstacleCircle.self]
-        } else if score >= 7 {
-            availableTypes = [MSObstacleCircle.self, MSObstacleSquare.self]
-        } else if score >= 15 {
-            availableTypes = [MSObstacleCircle.self, MSObstacleSquare.self, MSObstacleTriangle.self]
-        } else if score >= 25 {
-            availableTypes = [MSObstacleSquare.self, MSObstacleTriangle.self, MSObstacleDotCircle.self, MSObstacleDotTriangle.self, MSObstacleDotSquare.self]
-        } else if score >= 35 {
-            availableTypes = [MSObstacleTriangle.self, MSObstacleDotCircle.self, MSObstacleDotTriangle.self, MSObstacleDotSquare.self, MSObstacleDoubleCircle.self, MSObstacleExpandingDotCircle.self]
+        if score >= 30 {
+            return [MSObstacleTriangle.self, MSObstacleDotCircle.self, MSObstacleDotTriangle.self, MSObstacleDotSquare.self, MSObstacleDoubleCircle.self, MSObstacleExpandingDotCircle.self]
+        } else if score >= 20 {
+            return [MSObstacleSquare.self, MSObstacleTriangle.self, MSObstacleDotCircle.self, MSObstacleDotTriangle.self, MSObstacleDotSquare.self]
+        } else if score >= 11 {
+            return [MSObstacleCircle.self, MSObstacleSquare.self, MSObstacleTriangle.self]
+        } else if score >= 5 {
+            return [MSObstacleCircle.self, MSObstacleSquare.self]
+        } else {
+            return [MSObstacleCircle.self]
         }
-        
-        return availableTypes
     }
-    
-    // MARK: Rotation Speed Control Methods
-    
+        
     func speedUpRotation(by speedUpFactor: CGFloat) {
         rotationSpeedMultiplier *= speedUpFactor
         for obstacle in obstacles {
