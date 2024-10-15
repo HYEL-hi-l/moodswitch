@@ -21,17 +21,27 @@ class MSGameScene: SKScene {
     var ball: MSBall!
     var powerUpIndicator: MSPowerUpIndicator!
     
-    private var activePowerUpLabel: SKLabelNode!
+    private var activePowerUpSprite: SKSpriteNode?
+    private var powerUpAccentCircle = SKShapeNode()
     var activePowerUp: MSPowerUpType?
     let surgeRotationMultiplier: CGFloat = 1.5
     let slowRotationMultiplier: CGFloat = 0.5
-    var isInvincible = false
+    var isInvincible = true
     private var isDead = false
     
     var happyFallingEmitter: SKEmitterNode?
     var sadFallingEmitter: SKEmitterNode?
     var angryFallingEmitter: SKEmitterNode?
     var inLoveFallingEmitter: SKEmitterNode?
+    
+    private let moodColors: [MSMoodType: UIColor] = {
+        return [
+            .angry: MSMoodType.angry.color,
+            .happy: MSMoodType.happy.color,
+            .sad: MSMoodType.sad.color,
+            .inlove: MSMoodType.inlove.color
+        ]
+    }()
     
     
     init(context: MSGameContext, size: CGSize) {
@@ -74,6 +84,11 @@ extension MSGameScene {
         let spacing = 30.0
         let offset = 200.0
         powerUpIndicator.position = CGPoint(x: -size.width * 0.5 + layoutInfo.powerUpIndicatorHeight / 2 + spacing - offset, y: -size.height * 0.5 + layoutInfo.powerUpIndicatorHeight / 2 + spacing)
+        
+        activePowerUpSprite?.texture = nil
+        activePowerUpSprite?.alpha = 0.0
+        powerUpAccentCircle.alpha = 0.0
+        powerUpAccentCircle.removeAllActions()
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -159,14 +174,41 @@ extension MSGameScene {
             powerUpIndicator.position = CGPoint(x: -size.width * 0.5 + layoutInfo.powerUpIndicatorHeight / 2 + spacing - offset, y: -size.height * 0.5 + layoutInfo.powerUpIndicatorHeight / 2 + spacing)
             gameCamera.addChild(powerUpIndicator)
             
-            activePowerUpLabel = SKLabelNode(fontNamed: "Arial-BoldMT")
-            activePowerUpLabel.fontSize = 40
-            activePowerUpLabel.fontColor = UIColor(hex: "#6D00F9")
-            activePowerUpLabel.position = CGPoint(x: 0, y: size.height * 0.3)
-            activePowerUpLabel.zPosition = 1000
-            activePowerUpLabel.text = ""
-            activePowerUpLabel.alpha = 0.0
-            gameCamera.addChild(activePowerUpLabel)
+            activePowerUpSprite = SKSpriteNode(texture: SKTexture(imageNamed: "invincible"))
+            activePowerUpSprite?.position = CGPoint(x: 0, y: size.height * 0.3)
+            activePowerUpSprite?.zPosition = 1000
+            activePowerUpSprite?.alpha = 0.0
+            gameCamera.addChild(activePowerUpSprite!)
+            
+            let radius = ((activePowerUpSprite?.size.width ?? size.height * 0.10) * 0.725) * 1.15
+            let segmentAngle = 90.0
+            let moods: [MSMoodType] = [.angry, .happy, .sad, .inlove]
+            
+            for (index, mood) in moods.enumerated() {
+                let startAngle = CGFloat(index) * CGFloat(segmentAngle) * CGFloat.pi / 180
+                let endAngle = startAngle + CGFloat(segmentAngle) * CGFloat.pi / 180
+                
+                let path = createSectorPath(radius: radius, startAngle: startAngle, endAngle: endAngle)
+                
+                let segment = SKShapeNode(path: path)
+                segment.fillColor = moodColors[mood] ?? .white.withAlphaComponent(0.5)
+                segment.strokeColor = .clear
+                segment.zPosition = 0
+                
+                powerUpAccentCircle.addChild(segment)
+            }
+            
+            powerUpAccentCircle.position = CGPoint(x: 0, y: size.height * 0.3)
+            powerUpAccentCircle.zPosition = 950
+            powerUpAccentCircle.alpha = 0.0
+            
+            let powerUpAccentCircleFill = SKShapeNode(circleOfRadius: (activePowerUpSprite?.size.width ?? size.height * 0.10) * 0.725)
+            powerUpAccentCircleFill.fillColor = .black
+            powerUpAccentCircleFill.strokeColor = .clear
+            powerUpAccentCircleFill.position = CGPoint(x: 0, y: 0)
+            powerUpAccentCircleFill.zPosition = 1
+            powerUpAccentCircle.addChild(powerUpAccentCircleFill)
+            gameCamera.addChild(powerUpAccentCircle)
             
             
             let xPosition = size.width / 2
@@ -204,6 +246,14 @@ extension MSGameScene {
             gameCamera.addChild(angryFallingEmitter!)
             gameCamera.addChild(inLoveFallingEmitter!)
         }
+    }
+    
+    private func createSectorPath(radius: CGFloat, startAngle: CGFloat, endAngle: CGFloat) -> CGPath {
+        let path = CGMutablePath()
+        path.move(to: CGPoint.zero)
+        path.addArc(center: CGPoint.zero, radius: radius, startAngle: startAngle, endAngle: endAngle, clockwise: false)
+        path.closeSubpath()
+        return path
     }
     
     func setupBall() {
@@ -284,25 +334,52 @@ extension MSGameScene: MSPowerUpIndicatorDelegate {
     func powerUpActivated() {
         let powerUpTypes: [MSPowerUpType] = MSPowerUpType.allCases
         guard let selectedPowerUp = powerUpTypes.randomElement() else { return }
+//        let selectedPowerUp = MSPowerUpType.invincible
         
-//        activatePowerUp(selectedPowerUp)
-        activatePowerUp(.invincible)
+        activatePowerUp(selectedPowerUp)
         
-        activePowerUpLabel.text = selectedPowerUp.rawValue
+        switch selectedPowerUp {
+        case .surge:
+            let texture = SKTexture(imageNamed: "surge")
+            activePowerUpSprite?.texture = texture
+            activePowerUpSprite?.size = texture.size()
+        case .slow:
+            let texture = SKTexture(imageNamed: "slow")
+            activePowerUpSprite?.texture = texture
+            activePowerUpSprite?.size = texture.size()
+        case .invincible:
+            let texture = SKTexture(imageNamed: "invincible")
+            activePowerUpSprite?.texture = texture
+            activePowerUpSprite?.size = texture.size()
+        }
+        
+        
         let fadeIn = SKAction.fadeAlpha(to: 1.0, duration: 0.3)
-        activePowerUpLabel.run(fadeIn)
+        let scaleUp = SKAction.scale(to: 1.1, duration: 0.2)
+        let scaleDown = SKAction.scale(to: 1.0, duration: 0.2)
+        let wait = SKAction.wait(forDuration: 1.0)
+        let scaleSequence = SKAction.sequence([scaleUp, scaleDown, wait])
+        let repeatScale = SKAction.repeatForever(scaleSequence)
+        let group = SKAction.group([fadeIn, repeatScale])
+        activePowerUpSprite?.run(group)
         
-        let scaleUp = SKAction.scale(to: 1.2, duration: 0.3)
-        let scaleDown = SKAction.scale(to: 1.0, duration: 0.3)
-        let scaleSequence = SKAction.sequence([scaleUp, scaleDown])
-        activePowerUpLabel.run(scaleSequence)
+        let spinAction = SKAction.rotate(byAngle: .pi * 2, duration: 4.0)
+        let repeatSpin = SKAction.repeatForever(spinAction)
+        let showAndSpin = SKAction.group([fadeIn, repeatSpin])
+        powerUpAccentCircle.run(showAndSpin)
+
     }
     
     func powerUpDeactivated() {
         deactivatePowerUp()
         
         let fadeOut = SKAction.fadeAlpha(to: 0.0, duration: 0.3)
-        activePowerUpLabel.run(fadeOut)
+        powerUpAccentCircle.run(fadeOut) {
+            self.powerUpAccentCircle.removeAllActions()
+        }
+        activePowerUpSprite?.run(fadeOut) {
+            self.activePowerUpSprite?.removeAllActions()
+        }
     }
     
     func deathEffect(at position: CGPoint) {

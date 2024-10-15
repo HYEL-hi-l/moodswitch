@@ -41,12 +41,12 @@ extension MSMoodSwitcher {
     
     func getRandomMood(except currentMood: MSMoodType) -> MSMoodType {
         let validMoods = moods.filter { lastObstacleMoods.contains($0) }
+        
         var newMood = validMoods.randomElement() ?? validMoods.first
         while newMood == currentMood {
             newMood = validMoods.randomElement() ?? validMoods.first
         }
         
-        print(newMood, currentMood)
         return newMood ?? currentMood
     }
     

@@ -27,8 +27,8 @@ class MSPowerUpIndicator: SKNode {
         static let cornerRadius: CGFloat = 10.0
         static let circleLineWidth: CGFloat = 8.0
         static let powerUpCircleLineWidth: CGFloat = 12.0
-//        static let moodSegmentIncrement: CGFloat = 90.0
-        static let moodSegmentIncrement: CGFloat = 30.0
+        static let moodSegmentIncrement: CGFloat = 90.0
+//        static let moodSegmentIncrement: CGFloat = 30.0
         static let powerUpDecrement: CGFloat = 72.0
         static let moodSwitcherSize: CGFloat = 50.0
         static let glowExpandFactor: CGFloat = 3.0
