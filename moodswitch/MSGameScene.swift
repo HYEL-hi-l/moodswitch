@@ -26,7 +26,7 @@ class MSGameScene: SKScene {
     var activePowerUp: MSPowerUpType?
     let surgeRotationMultiplier: CGFloat = 1.5
     let slowRotationMultiplier: CGFloat = 0.5
-    var isInvincible = true
+    var isInvincible = false
     private var isDead = false
     
     var happyFallingEmitter: SKEmitterNode?
