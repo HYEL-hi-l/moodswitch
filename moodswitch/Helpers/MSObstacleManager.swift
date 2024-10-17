@@ -78,7 +78,7 @@ class MSObstacleManager {
         lastObstacleMoods = obstacle.moods
     }
     
-    private func getAvailableObstacleTypes(for score: Int) -> [MSObstacle.Type] {
+    private func getAvailableObstacleTypes(for score: Int) -> [MSObstacle.Type] {        
         if score >= 30 {
             return [MSObstacleTriangle.self, MSObstacleDotCircle.self, MSObstacleDotTriangle.self, MSObstacleDotSquare.self, MSObstacleDoubleCircle.self, MSObstacleExpandingDotCircle.self]
         } else if score >= 20 {

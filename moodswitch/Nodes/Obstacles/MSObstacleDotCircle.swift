@@ -22,9 +22,7 @@ class MSObstacleDotCircle: MSObstacle {
             let smallCircleRadius = (circumference / CGFloat(numberOfCircles)) * (1 - gapFraction) / 2
             
             let angleStep = (2.0 * CGFloat.pi) / CGFloat(numberOfCircles)
-            
-            var lastMoodIndex = -1
-            
+                        
             for i in 0..<numberOfCircles {
                 let angle = CGFloat(i) * angleStep
                 let x = (outerRadius - smallCircleRadius) * cos(angle)

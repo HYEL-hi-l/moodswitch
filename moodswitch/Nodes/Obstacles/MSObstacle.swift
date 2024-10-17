@@ -28,7 +28,6 @@ class MSObstacle: SKNode {
         createShape()
     }
     
-    /// overridden by subclasses
     func createShape() {  }
     func updateRotationSpeed(to speedMultiplier: CGFloat) {  }
     

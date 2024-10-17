@@ -19,7 +19,6 @@ class MSObstacleDoubleCircle: MSObstacle {
         
         let moodSequence = MSMoodManager.shared.getRandomMoodSequenceForDoubleCircle()
         
-        // Create outer circle node
         outerCircleNode = SKNode()
         createCircle(on: outerCircleNode, radius: outerRadius, thickness: thickness, moodSequence: moodSequence)
         addChild(outerCircleNode)

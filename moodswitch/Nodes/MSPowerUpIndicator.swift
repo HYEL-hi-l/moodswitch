@@ -266,7 +266,6 @@ extension MSPowerUpIndicator {
         }
 
         let sequence = SKAction.sequence(actions)
-        let actionKey = "animateProgress_\(mood)"
         run(sequence) {
             completion()
         }
@@ -328,10 +327,8 @@ extension MSPowerUpIndicator {
         let maxScale: CGFloat = Constants.glowExpandFactor
         
         let progressRatio = powerUpProgress / maxProgress
-        let newScale = minScale + (maxScale - minScale) * progressRatio
-        
         let fadeKey = "glowFade"
-        
+    
         let fadeAction = SKAction.fadeAlpha(to: progressRatio, duration: 0.1)
         glowNode?.run(fadeAction, withKey: fadeKey)
     }
@@ -381,15 +378,12 @@ extension MSPowerUpIndicator {
         guard let glowNode = glowNode else { return }
         
         originalBackgroundSize = backgroundNode.frame.size
-        let expandedSize = CGSize(width: originalBackgroundSize!.width * Constants.glowExpandFactor,
-                                  height: originalBackgroundSize!.height * Constants.glowExpandFactor)
         
         let expandAction = SKAction.scale(to: Constants.glowExpandFactor, duration: Constants.glowDuration)
         let fadeInAction = SKAction.fadeAlpha(to: 1.0, duration: Constants.glowDuration)
         
         glowNode.run(SKAction.group([expandAction, fadeInAction]))
         
-        // Add a subtle pulsing effect
         let pulseAction = SKAction.sequence([
             SKAction.scale(to: Constants.glowExpandFactor * 1.05, duration: 0.5),
             SKAction.scale(to: Constants.glowExpandFactor, duration: 0.5)
@@ -398,12 +392,12 @@ extension MSPowerUpIndicator {
     }
 
     private func contractAndRemoveGlow() {
-        guard let glowNode = glowNode, let originalSize = originalBackgroundSize else { return }
+        guard let glowNode = glowNode else { return }
         
         let contractAction = SKAction.scale(to: 1.0, duration: Constants.glowDuration)
         let fadeOutAction = SKAction.fadeAlpha(to: 0.0, duration: Constants.glowDuration)
         
-        glowNode.removeAllActions() // Remove the pulsing effect
+        glowNode.removeAllActions()
         
         glowNode.run(SKAction.group([contractAction, fadeOutAction])) { [weak self] in
             self?.glowNode?.setScale(1.0)

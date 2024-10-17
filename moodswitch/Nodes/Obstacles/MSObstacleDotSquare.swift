@@ -46,11 +46,11 @@ class MSObstacleDotSquare: MSObstacle {
             
             let smallCircle = createSmallCircle(at: position, radius: layoutInfo.obstacleThickness / 2, color: color)
             addChild(smallCircle)
-            smallCircles.append(smallCircle)  // Store reference to small circle
+            smallCircles.append(smallCircle)
             
             let glowNode = createGlowNode(for: smallCircle, color: color)
             addChild(glowNode)
-            glowNodes.append(glowNode)  // Store reference to glow node
+            glowNodes.append(glowNode)
             
             let moveAction = SKAction.follow(path, asOffset: false, orientToPath: false, duration: initialDuration)
             let repeatAction = SKAction.repeatForever(moveAction)

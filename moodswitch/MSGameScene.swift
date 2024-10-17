@@ -334,7 +334,6 @@ extension MSGameScene: MSPowerUpIndicatorDelegate {
     func powerUpActivated() {
         let powerUpTypes: [MSPowerUpType] = MSPowerUpType.allCases
         guard let selectedPowerUp = powerUpTypes.randomElement() else { return }
-//        let selectedPowerUp = MSPowerUpType.invincible
         
         activatePowerUp(selectedPowerUp)
         

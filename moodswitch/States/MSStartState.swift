@@ -220,9 +220,7 @@ extension MSStartState {
         gameScene.background.flashTexture(with: newMood, for: cooldownDuration)
     }
     
-    private func changeMood(to mood: MSMoodType) {
-        guard let currentMood = gameScene.ball.mood else { return }
-        
+    private func changeMood(to mood: MSMoodType) {        
         gameScene.ball.changeMood(to: mood)
         gameScene.background.flashTexture(with: mood, for: cooldownDuration)
     }

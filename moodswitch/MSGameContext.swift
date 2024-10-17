@@ -40,7 +40,6 @@ class MSGameContext {
         let screenSize = UIScreen.main.bounds.size
         
         layoutInfo.ballRadius = screenSize.width / 15
-//        layoutInfo.ballRadius = screenSize.width / 20
         layoutInfo.moodSwitcherRadius = layoutInfo.ballRadius - 5
         layoutInfo.ballYOffset = screenSize.height * 0.25
         layoutInfo.ballStartPosition = CGPoint(x: screenSize.width / 2, y: layoutInfo.ballYOffset)
@@ -55,7 +54,6 @@ class MSGameContext {
         
         layoutInfo.powerUpIndicatorWidth = screenSize.width * 0.2
         layoutInfo.powerUpIndicatorHeight = screenSize.width * 0.2
-//        layoutInfo.powerUpIndicatorHeight = screenSize.height * 0.35
         layoutInfo.powerUpIndicatorCornerRadius = 15
     }
 }
